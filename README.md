@@ -2,7 +2,7 @@
 
 ![Docker Stars](https://img.shields.io/docker/stars/virtuallytd/aws-cli.svg)
 ![Docker Pulls](https://img.shields.io/docker/pulls/virtuallytd/aws-cli.svg)
-![Docker Automated Builds](http://img.shields.io/docker/automated/virtuallytd/aws-cli.svg)
+![Docker Automated Builds](https://img.shields.io/docker/cloud/automated/virtuallytd/aws-cli.svg)
 
 ## Supported tags and Dockerfiles
 
