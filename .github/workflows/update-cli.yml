@@ -1,0 +1,46 @@
+name: Check for AWS CLI Updates
+
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get current version from Dockerfile
+        id: current
+        run: echo "version=$(grep -oP 'CLI_VERSION=\K[0-9.]+' Dockerfile)" >> "$GITHUB_OUTPUT"
+
+      - name: Get latest AWS CLI v2 version
+        id: latest
+        run: |
+          LATEST=$(curl -s https://api.github.com/repos/aws/aws-cli/tags?per_page=1 | grep -oP '"name":\s*"\K[0-9.]+' | head -1)
+          echo "version=$LATEST" >> "$GITHUB_OUTPUT"
+
+      - name: Update Dockerfile if new version available
+        if: steps.current.outputs.version != steps.latest.outputs.version
+        run: |
+          sed -i "s/CLI_VERSION=${{ steps.current.outputs.version }}/CLI_VERSION=${{ steps.latest.outputs.version }}/" Dockerfile
+          echo "Updated AWS CLI from ${{ steps.current.outputs.version }} to ${{ steps.latest.outputs.version }}"
+
+      - name: Create pull request
+        if: steps.current.outputs.version != steps.latest.outputs.version
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "Update AWS CLI to ${{ steps.latest.outputs.version }}"
+          title: "Update AWS CLI to ${{ steps.latest.outputs.version }}"
+          body: |
+            Automated update of AWS CLI from `${{ steps.current.outputs.version }}` to `${{ steps.latest.outputs.version }}`.
+
+            [Release notes](https://github.com/aws/aws-cli/blob/v2/CHANGELOG.rst)
+          branch: update-cli/${{ steps.latest.outputs.version }}
+          delete-branch: true

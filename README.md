@@ -1,48 +1,57 @@
 # AWS CLI Docker Image
 
-![Docker Stars](https://img.shields.io/docker/stars/virtuallytd/aws-cli.svg)
-![Docker Pulls](https://img.shields.io/docker/pulls/virtuallytd/aws-cli.svg)
-![Docker Automated Builds](https://img.shields.io/docker/cloud/automated/virtuallytd/aws-cli.svg)
+Multi-arch Docker image for the AWS CLI v2, supporting both `amd64` and `arm64` (Apple Silicon).
 
-## Supported tags and Dockerfiles
+Published to GitHub Container Registry: `ghcr.io/virtuallytd/aws-cli-docker`
 
-- [1.18.188](https://github.com/virtuallytd/aws-cli-docker/blob/1.18.188/Dockerfile)
-
-This image provides the AWS CLI.
-
-## Providing Credentials
-
-Credentials can be provided in any of the aws-cli supported formats.
+## Usage
 
 ### Using credentials file
 
-If you need to create the credentials file, you can use the aws-cli configure command by using the following command:
+Configure credentials interactively:
 
 ```
-docker run --rm -tiv $HOME/.aws:/root/.aws virtuallytd/aws-cli aws configure
+docker run --rm -it -v $HOME/.aws:/root/.aws ghcr.io/virtuallytd/aws-cli-docker configure
 ```
 
-From that point on, simply mount the directory containing your config.
+Then run commands with your saved credentials:
 
 ```
-docker run --rm -v $HOME/.aws:/root/.aws virtuallytd/aws-cli aws s3 ls
+docker run --rm -v $HOME/.aws:/root/.aws ghcr.io/virtuallytd/aws-cli-docker s3 ls
 ```
 
 ### Using environment variables
 
-This is supported, although NOT encouraged, as the environment variables can end up in command-line history, available for container inspection, etc.
+```
+docker run --rm \
+  -e AWS_ACCESS_KEY_ID=my-key-id \
+  -e AWS_SECRET_ACCESS_KEY=my-secret-access-key \
+  -v $(pwd):/aws \
+  ghcr.io/virtuallytd/aws-cli-docker s3 ls
+```
 
-- AWS_ACCESS_KEY_ID` - specify the access key ID
-- AWS_SECRET_ACCESS_KEY` - the secret access key
+### Shell alias
+
+Set up `aws` as an alias so the container is transparent:
 
 ```
-docker run --rm -e AWS_ACCESS_KEY_ID=my-key-id -e AWS_SECRET_ACCESS_KEY=my-secret-access-key -v $(pwd):/aws virtuallytd/aws-cli aws s3 ls 
+alias aws='docker run --rm -it -v $HOME/.aws:/root/.aws -v $(pwd):/aws ghcr.io/virtuallytd/aws-cli-docker'
 ```
 
-## Using the container as a CLI command
+## Building locally
 
-You can setup an alias for `aws` to simply start a container, hiding the fact that it's not actually installed on the machine. Then, updating the version simply becomes a `docker pull virtuallytd/aws-cli`.
+```bash
+# Build for your current architecture
+docker build -t aws-cli .
 
+# Build with a specific CLI version
+docker build --build-arg CLI_VERSION=2.37.13 -t aws-cli .
+
+# Multi-arch build
+docker buildx build --platform linux/amd64,linux/arm64 -t aws-cli .
 ```
-alias aws='docker run --rm -tiv $HOME/.aws:/root/.aws -v $(pwd):/aws virtuallytd/aws-cli aws'
-```
+
+## CI/CD
+
+- **Build workflow** (`.github/workflows/build.yml`): Builds and pushes multi-arch images to GHCR on every push to `master`. PRs get a build check without pushing.
+- **Update workflow** (`.github/workflows/update-cli.yml`): Runs daily at 08:00 UTC to check for new AWS CLI v2 releases. Opens a PR automatically when a new version is found.

@@ -1,13 +1,19 @@
-FROM python:alpine
-LABEL maintainer "Tony Davis <tony@virtuallytd.com>"
+FROM debian:bookworm-slim
 
-ARG CLI_VERSION=1.18.188
+ARG CLI_VERSION=2.37.13
+ARG TARGETARCH
 
-RUN apk -uv add --no-cache \
-    groff \
-    less \
-    && pip install --no-cache-dir awscli==$CLI_VERSION
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl unzip groff less \
+    && ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64" || echo "x86_64") \
+    && curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}-${CLI_VERSION}.zip" -o /tmp/awscli.zip \
+    && unzip -q /tmp/awscli.zip -d /tmp \
+    && /tmp/aws/install \
+    && rm -rf /tmp/awscli.zip /tmp/aws \
+    && apt-get purge -y curl unzip \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /aws
 
-CMD sh
+ENTRYPOINT ["aws"]
