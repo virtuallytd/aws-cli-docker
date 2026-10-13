@@ -4,7 +4,7 @@ ARG CLI_VERSION=2.37.13
 ARG TARGETARCH
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl unzip groff less \
+    && apt-get install -y --no-install-recommends ca-certificates curl unzip groff less \
     && ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "aarch64" || echo "x86_64") \
     && curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}-${CLI_VERSION}.zip" -o /tmp/awscli.zip \
     && unzip -q /tmp/awscli.zip -d /tmp \
