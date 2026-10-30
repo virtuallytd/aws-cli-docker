@@ -1,6 +1,6 @@
 FROM debian:bookworm-slim
 
-ARG CLI_VERSION=2.37.13
+ARG CLI_VERSION=2.39.2
 ARG TARGETARCH
 
 RUN apt-get update \
